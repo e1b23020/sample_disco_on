@@ -26,10 +26,10 @@ jobs:
             --arg description "$BODY" \
             --arg author "$USER" \
             '{
-              content: $content,
+              content: ($content + "\n" + $url),
               embeds: [{
                 title: $title,
-                url: $url,
+                # url: $url,
                 description: ($description | .[0:200]),
                 color: 3447003,
                 author: { name: $author }
