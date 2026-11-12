@@ -1,0 +1,65 @@
+name: Discord Notification
+
+on:
+  issues:
+    types: [opened]
+  pull_request:
+    types: [opened]
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Notify Issue to Discord
+        if: github.event_name == 'issues'
+        env:
+          WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          TITLE: ${{ github.event.issue.title }}
+          URL: ${{ github.event.issue.html_url }}
+          USER: ${{ github.event.issue.user.login }}
+          BODY: ${{ github.event.issue.body }}
+        run: |
+          jq -n \
+            --arg content "新しいIssueが作成されました！" \
+            --arg title "$TITLE" \
+            --arg url "$URL" \
+            --arg description "$BODY" \
+            --arg author "$USER" \
+            '{
+              content: $content,
+              embeds: [{
+                title: $title,
+                url: $url,
+                description: ($description | .[0:200]),
+                color: 3447003,
+                author: { name: $author }
+              }]
+            }' > payload.json
+          curl -H "Content-Type: application/json" -d @payload.json "$WEBHOOK_URL"
+
+      - name: Notify PR to Discord
+        if: github.event_name == 'pull_request'
+        env:
+          WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          TITLE: ${{ github.event.pull_request.title }}
+          URL: ${{ github.event.pull_request.html_url }}
+          USER: ${{ github.event.pull_request.user.login }}
+          BODY: ${{ github.event.pull_request.body }}
+        run: |
+          jq -n \
+            --arg content "新しいPull Requestが作成されました！" \
+            --arg title "$TITLE" \
+            --arg url "$URL" \
+            --arg description "$BODY" \
+            --arg author "$USER" \
+            '{
+              content: $content,
+              embeds: [{
+                title: $title,
+                url: $url,
+                description: ($description | .[0:200]),
+                color: 3066993,
+                author: { name: $author }
+              }]
+            }' > payload.json
+          curl -H "Content-Type: application/json" -d @payload.json "$WEBHOOK_URL"
